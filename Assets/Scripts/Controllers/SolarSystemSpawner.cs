@@ -15,9 +15,11 @@ public class SolarSystemSpawner : MonoBehaviour
     [SerializeField] private int _orbitSegments = 100;
 
     [Header("Asteroid Belt Settings")]
-    [SerializeField] private int _asteroidCount = 200;
-    [SerializeField] private float _beltInnerRadius = 35f;
-    [SerializeField] private float _beltOuterRadius = 50f;
+    [SerializeField] private int _numberOfFields = 5;
+    [SerializeField] private int _astroidsPerField = 50;
+    [SerializeField] private float _fieldRadius = 5f;
+    [SerializeField] private float _minDistanceFromStar = 15f;
+    [SerializeField] private float _maxDistanceFromStar = 60f;
 
     private Transform _star;
 
@@ -73,14 +75,27 @@ public class SolarSystemSpawner : MonoBehaviour
 
     void SpawnAsteroidBelt()
     {
-        GameObject belt = new GameObject("Asteroid Belt");
-        for (int i = 0; i < _asteroidCount; i++)
+        GameObject asteroidFieldsParent = new GameObject("Asteroid Belt");
+        for (int f = 0; f < _numberOfFields; f++)
         {
-            float r = Random.Range(_beltInnerRadius, _beltOuterRadius);
-            float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
-            Vector3 pos = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * r + _star.position;
-            GameObject asteroid = Instantiate(_asteroidPrefab, pos, Quaternion.identity, belt.transform);
-            asteroid.transform.localScale = Vector3.one * Random.Range(0.2f, 0.5f);
+            // Random center for field
+            float distance = Random.Range(_minDistanceFromStar, _maxDistanceFromStar);
+            float angle = Random.Range(0, 360f) * Mathf.Deg2Rad;
+            Vector3 fieldCenter = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * distance + _star.position;
+
+            GameObject field = new GameObject("Asteroid Field " + (f + 1));
+            field.transform.parent = asteroidFieldsParent.transform;
+            field.transform.position = fieldCenter;
+
+            // Spawn stuffs
+            for (int i = 0; i < _astroidsPerField; i++)
+            {
+                Vector2 offset = Random.insideUnitCircle * _fieldRadius;
+                Vector3 pos = fieldCenter + new Vector3(offset.x, offset.y, 0f);
+
+                GameObject asteroid = Instantiate(_asteroidPrefab, pos, Quaternion.identity, field.transform);
+                asteroid.transform.localScale = Vector3.one * Random.Range(0.2f, 0.5f);
+            }
         }
     }
 }
