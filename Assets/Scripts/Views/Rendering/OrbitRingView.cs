@@ -11,24 +11,41 @@ public class OrbitRingView : MonoBehaviour
     public OrbitModel Orbit
     {
         get => _orbit;
-        set => _orbit = value;
+        set
+        {
+            _orbit = value;
+            if (_orbit != null) DrawOrbit();    // In case runtime assignment
+        }
     }
 
     public int Segments
     {
         get => _segments;
-        set => _segments = value;
+        set
+        {
+            _segments = value;
+            if (_orbit != null) DrawOrbit();    // In case of segment change
+        }
     }
 
     void Awake()
     {
         _lr = GetComponent<LineRenderer>();
-        _lr.useWorldSpace = true;
+        _lr.useWorldSpace = false;
     }
 
-    void Update()
+    void Start()
     {
-        DrawOrbit();
+        if (_orbit != null)
+            DrawOrbit();
+    }
+
+    void LateUpdate()
+    {
+        if (_orbit != null && _orbit.CentralBody != null)
+        {
+            transform.position = _orbit.CentralBody.position;   
+        }
     }
 
     void DrawOrbit()
@@ -45,7 +62,7 @@ public class OrbitRingView : MonoBehaviour
         {
             float angle = i * step;
             Vector3 pos = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * _orbit.Radius;
-            _lr.SetPosition(i, _orbit.CentralBody.position + pos);
+            _lr.SetPosition(i, pos);
         }
     }
 }
