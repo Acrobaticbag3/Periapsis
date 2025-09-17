@@ -3,18 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Orbit data model (radius, period, central body)
-public class OrbitModel
+public class OrbitModel : MonoBehaviour
 {
     [SerializeField] private Transform _centralBody; // The star
     [SerializeField] private float _radius = 10f;    // Orbit radius
     [SerializeField] private float _period = 10f;    // Time to complete one orbit in seconds
-
-    public OrbitModel(Transform centralBody, float radius, float period)
-    {
-        _centralBody = centralBody;
-        _radius = radius;
-        _period = period;
-    }
 
     public Transform CentralBody
     {

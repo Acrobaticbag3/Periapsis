@@ -31,14 +31,15 @@ public class OrbitRingView : MonoBehaviour
     {
         if (_orbit == null || _orbit.CentralBody == null)
             return;
-
+        /*
         float angle = 0f;
         for (int i = 0; i <= _segments; i++)
         {
             float rad = Mathf.Deg2Rad * angle;
-            Vector3 pos = new Vector3(Mathf.Cos(rad), Mathf.Sin(rad) * _orbit.Radius);
+            Vector3 pos = new Vector3(Mathf.Cos(rad), Mathf.Sin(rad) * 0f) * _orbit.Radius;
             _lr.SetPosition(i, _orbit.CentralBody.position + pos);
             angle += 360f / _segments;
         }
+        */
     }
 }

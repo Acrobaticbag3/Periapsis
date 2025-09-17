@@ -8,7 +8,8 @@ public class SolarSystemSpawner : MonoBehaviour
     [SerializeField] private GameObject _starPrefab;
     [SerializeField] private GameObject _planetPrefab;
     [SerializeField] private GameObject _gasGiantPrefab;
-    [SerializeField]private GameObject _asteroidPrefab;
+    [SerializeField] private GameObject _asteroidPrefab;
+    [SerializeField] private GameObject _moonPrefab;
 
     [Header("Orbit Line Settings")]
     [SerializeField] private Material _orbitLineMaterial;
@@ -20,6 +21,14 @@ public class SolarSystemSpawner : MonoBehaviour
     [SerializeField] private float _fieldRadius = 5f;
     [SerializeField] private float _minDistanceFromStar = 15f;
     [SerializeField] private float _maxDistanceFromStar = 60f;
+
+    [Header("Moon Settings")]
+    [SerializeField] private int _minMoons = 0;
+    [SerializeField] private int _maxMoons = 3;
+    [SerializeField] private float _moonMinDist = 1.5f;
+    [SerializeField] private float _moonMaxDist = 4f;
+    [SerializeField] private float _moonMinPeriod = 2;
+    [SerializeField] private float _moonMaxPeriod = 6f;
 
     private Transform _star;
 
@@ -35,14 +44,14 @@ public class SolarSystemSpawner : MonoBehaviour
         _star.name = "Star";
 
         // === PLANETS ===
-        SpawnPlanet("Planet A", 10f, 8f, Color.cyan, _planetPrefab);
-        SpawnPlanet("Planet B", 18f, 12f, Color.green, _planetPrefab);
-        SpawnPlanet("Planet C", 25f, 18f, Color.gray, _planetPrefab);
+        SpawnPlanet("Planet A", 10f, 80f, Color.cyan, _planetPrefab);
+        SpawnPlanet("Planet B", 18f, 120f, Color.green, _planetPrefab);
+        SpawnPlanet("Planet C", 25f, 180f, Color.gray, _planetPrefab);
 
         // === GAS GIANT ===
-        SpawnPlanet("Gas Giant", 32f, 30f, Color.red, _gasGiantPrefab);
+        SpawnPlanet("Gas Giant", 32f, 300f, Color.red, _gasGiantPrefab);
 
-        // ===  ASTEROID BELT ===
+        // ===  ASTEROID BELTS ===
         SpawnAsteroidBelt();
     }
 
@@ -54,11 +63,13 @@ public class SolarSystemSpawner : MonoBehaviour
         planet.transform.localScale = Vector3.one * (prefab == _gasGiantPrefab ? 2.5f : 1f);
 
         // Orbit data
-        OrbitModel orbit = new OrbitModel(_star, orbitRadius, orbitPeriod);
+        OrbitModel orbit = planet.AddComponent<OrbitModel>();
+        orbit.CentralBody = _star;
+        orbit.Radius = orbitRadius;
+        orbit.Period = orbitPeriod;
 
         // Movement
-        PlanetModel orbiting = planet.AddComponent<PlanetModel>();
-        orbiting.Orbit = orbit;
+        planet.AddComponent<OrbitController>();
 
         // Visual orbit ring
         GameObject orbitLine = new GameObject(name + " Orbit");
@@ -70,6 +81,44 @@ public class SolarSystemSpawner : MonoBehaviour
         // Line renderer setup
         lr.material = _orbitLineMaterial;
         lr.widthMultiplier = 0.05f;
+        lr.loop = true;
+
+        int moonCount = Random.Range(_minMoons, _maxMoons + 1);
+        for (int i = 0; i < moonCount; i++)
+        {   
+            // Spread moons by index, avoid overlap
+            float baseDist = _moonMinDist + i * 2.0f;
+            float moonRadius = Random.Range(_moonMinDist, _moonMaxDist);
+            float moonPeriod = Random.Range(_moonMinPeriod, _moonMaxPeriod);
+            SpawnMoon(name + " Moon " + (i + 1), planet, moonRadius, moonPeriod, _moonPrefab);
+        }
+    }
+
+    private void SpawnMoon(string name, GameObject planet, float orbitRadius, float orbitPeriod, GameObject prefab)
+    {   
+        // Moon instance
+        GameObject moon = Instantiate(prefab, planet.transform.position + Vector3.right * orbitRadius, Quaternion.identity);
+        moon.name = name;
+        moon.transform.localScale = Vector3.one * 0.5f;
+
+        // Orbit data
+        OrbitModel orbit = moon.AddComponent<OrbitModel>();
+        orbit.CentralBody = planet.transform;
+        orbit.Radius = orbitRadius;
+        orbit.Period = orbitPeriod;
+
+        moon.AddComponent<OrbitController>();
+
+        // Visual orbit ring
+        GameObject orbitLine = new GameObject(name + " Orbit");
+        LineRenderer lr = orbitLine.AddComponent<LineRenderer>();
+        OrbitRingView ring = orbitLine.AddComponent<OrbitRingView>();
+        ring.Orbit = orbit;
+        ring.Segments = _orbitSegments;
+
+        // Line renderer setup
+        lr.material = _orbitLineMaterial;
+        lr.widthMultiplier = 0.025f;
         lr.loop = true;
     }
 
