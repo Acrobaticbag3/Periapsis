@@ -12,8 +12,7 @@ public class PlanetOrbitController : MonoBehaviour
         if (_orbit == null || _orbit.CentralBody == null)
             return;
 
-        _angle += (360f / _orbit.Period) * Time.deltaTime;
-        _angle %= 360f;
+        _angle += Mathf.Repeat(_angle, 360);
 
         float rad = _angle * Mathf.Deg2Rad;
         Vector3 offset = new Vector3(Mathf.Cos(rad), Mathf.Sin(rad), 0f) * _orbit.Radius;
