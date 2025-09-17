@@ -6,7 +6,7 @@ public class OrbitRingView : MonoBehaviour
 {
     [SerializeField] private OrbitModel _orbit;
     [SerializeField] private int _segments = 100;
-    [SerializeField] private LineRenderer _lr;
+    private LineRenderer _lr;
 
     public OrbitModel Orbit
     {
@@ -20,10 +20,14 @@ public class OrbitRingView : MonoBehaviour
         set => _segments = value;
     }
 
-    void Start()
+    void Awake()
     {
         _lr = GetComponent<LineRenderer>();
-        _lr.positionCount = _segments + 1;
+        _lr.useWorldSpace = true;
+    }
+
+    void Update()
+    {
         DrawOrbit();
     }
 
@@ -31,15 +35,17 @@ public class OrbitRingView : MonoBehaviour
     {
         if (_orbit == null || _orbit.CentralBody == null)
             return;
-        /*
-        float angle = 0f;
-        for (int i = 0; i <= _segments; i++)
+
+        int segments = Mathf.Max(100, _segments);
+        _lr.positionCount = segments + 1;   // +1 for manual closing of loop
+
+        float step = 2f * Mathf.PI / segments;
+
+        for (int i = 0; i <= segments; i++)
         {
-            float rad = Mathf.Deg2Rad * angle;
-            Vector3 pos = new Vector3(Mathf.Cos(rad), Mathf.Sin(rad) * 0f) * _orbit.Radius;
+            float angle = i * step;
+            Vector3 pos = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * _orbit.Radius;
             _lr.SetPosition(i, _orbit.CentralBody.position + pos);
-            angle += 360f / _segments;
         }
-        */
     }
 }
