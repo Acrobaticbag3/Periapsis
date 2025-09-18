@@ -4,20 +4,27 @@ using UnityEngine;
 
 public class InputController : MonoBehaviour
 {
-    private OrbitRingView[] _orbitRings;
+    private float strategicAlpha = 1f;
+    private float tacticalAlpha = 0.1f;
 
-    void Awake()
-    {
-        _orbitRings = FindObjectsOfType<OrbitRingView>();
-    }
+    private CameraMode _mode = CameraMode.Tactical; // Default
 
     void Update()
     {
-        if (_orbitRings == null) return;
         if (Input.GetKeyDown(KeyCode.Tab))
-        {
-            foreach (var ring in _orbitRings)
-                ring.ToggleVisibility();
-        }
+            ToggleCameraMode();
+    }
+
+    private void ToggleCameraMode()
+    {
+        _mode = (_mode == CameraMode.Tactical) ? CameraMode.Strategic : CameraMode.Tactical;
+        UpdateOrbitAlphas();
+    }
+
+    private void UpdateOrbitAlphas()
+    {
+        float alpha = (_mode == CameraMode.Strategic) ? strategicAlpha : tacticalAlpha;
+        foreach (var ring in FindObjectsOfType<OrbitRingView>())
+            ring.SetAlpha(alpha);
     }
 }

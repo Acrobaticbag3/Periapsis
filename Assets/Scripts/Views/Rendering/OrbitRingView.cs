@@ -32,6 +32,7 @@ public class OrbitRingView : MonoBehaviour
     {
         _lr = GetComponent<LineRenderer>();
         _lr.useWorldSpace = false;
+        SetAlpha(0.1f);
     }
 
     void Start()
@@ -72,6 +73,7 @@ public class OrbitRingView : MonoBehaviour
         if (_lr == null)
             _lr = GetComponent<LineRenderer>();
     }
+    /*
     public void ToggleVisibility()
     {
         EnsureLR();
@@ -90,5 +92,20 @@ public class OrbitRingView : MonoBehaviour
     {
         EnsureLR();
         return _lr != null && _lr.enabled;
+    }
+    */
+    public void SetAlpha(float alpha)
+    {
+        EnsureLR();
+        if (_lr == null) return;
+
+        Color start = _lr.startColor;
+        Color end = _lr.endColor;
+
+        start.a = alpha;
+        end.a = alpha;
+
+        _lr.startColor = start;
+        _lr.endColor = end;
     }
 }
