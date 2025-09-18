@@ -4,15 +4,20 @@ using UnityEngine;
 
 public class InputController : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    private OrbitRingView[] _orbitRings;
+
+    void Awake()
     {
-        
+        _orbitRings = FindObjectsOfType<OrbitRingView>();
     }
 
-    // Update is called once per frame
     void Update()
     {
-        
+        if (_orbitRings == null) return;
+        if (Input.GetKeyDown(KeyCode.Tab))
+        {
+            foreach (var ring in _orbitRings)
+                ring.ToggleVisibility();
+        }
     }
 }

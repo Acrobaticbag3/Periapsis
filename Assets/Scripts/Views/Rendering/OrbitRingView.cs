@@ -42,9 +42,9 @@ public class OrbitRingView : MonoBehaviour
 
     void LateUpdate()
     {
-        if (_orbit != null && _orbit.CentralBody != null)
+        if (_lr.enabled && _orbit != null && _orbit.CentralBody != null)
         {
-            transform.position = _orbit.CentralBody.position;   
+            transform.position = _orbit.CentralBody.position;
         }
     }
 
@@ -64,5 +64,31 @@ public class OrbitRingView : MonoBehaviour
             Vector3 pos = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * _orbit.Radius;
             _lr.SetPosition(i, pos);
         }
+    }
+
+    // === === === Visibility API in use by Input Controller === === === \\
+    private void EnsureLR()
+    {
+        if (_lr == null)
+            _lr = GetComponent<LineRenderer>();
+    }
+    public void ToggleVisibility()
+    {
+        EnsureLR();
+        if (_lr == null) return;
+        _lr.enabled = !_lr.enabled;
+    }
+
+    public void SetVisibility(bool visible)
+    {
+        EnsureLR();
+        if (_lr == null) return;
+        _lr.enabled = visible;
+    }
+
+    public bool IsVisable()
+    {
+        EnsureLR();
+        return _lr != null && _lr.enabled;
     }
 }
