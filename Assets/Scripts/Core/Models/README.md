@@ -1,0 +1,1 @@
+Modles --> blueprints/storage, base of our object, stores all state data

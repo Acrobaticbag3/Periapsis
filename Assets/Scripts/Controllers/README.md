@@ -1,0 +1,1 @@
+Drivers, logical operations between the model and view layer. May listen for input to alter data, may not directly alter UI
