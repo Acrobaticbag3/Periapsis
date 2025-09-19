@@ -10,8 +10,7 @@ public class CameraView : MonoBehaviour
     private Camera cam;
 
     [Header("Zoom scale settings")]
-    // For fine tuning, probably remove once good standard found
-    [SerializeField] private float _NORMALSCALE = 0.5f;
+    [SerializeField] private float _NORMALSCALE = 0.3f;
     [SerializeField] private float _LARGESCALE = 1.8f;
     [SerializeField] private float _baseLayer = -5f;
 

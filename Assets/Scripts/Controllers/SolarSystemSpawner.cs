@@ -19,27 +19,43 @@ public class SolarSystemSpawner : MonoBehaviour
     [SerializeField] private Material _orbitLineMaterial;
     [SerializeField] private int _orbitSegments = 100;
 
+    [Header("Gas Giant")]
+    private float _gasGiantChance = 0.2f;
+    private int _minGasGiantIndex = 3;
+
     [Header("Planet Settings")]
-    [SerializeField] private int _minPlanets = 3;
-    [SerializeField] private int _maxPlanets = 7;
-    [SerializeField] private float _planetMinDist = 10f;
-    [SerializeField] private float _planetSpacing = 8f;
+    private int _minPlanets = 3;
+    private int _maxPlanets = 7;
+    private float _planetMinDist = 10f;
+    private float _planetSpacing = 8f;
 
     [Header("Moon Settings")]
-    [SerializeField] private int _minMoons = 0;
-    [SerializeField] private int _maxMoons = 3;
-    [SerializeField] private float _moonMinDist = 1.5f;
-    [SerializeField] private float _moonMaxDist = 4f;
-    [SerializeField] private float _moonMinPeriod = 2;
-    [SerializeField] private float _moonMaxPeriod = 6f;
+    private int _minMoons = 0;
+    private int _maxMoons = 3;
+    private float _moonMinDist = 1.5f;
+    private float _moonMaxDist = 4f;
 
     [Header("Asteroid Belt Settings")]
-    [SerializeField] private int _minBelts = 0;
-    [SerializeField] private int _maxBelts = 3;
-    [SerializeField] private int _astroidsPerField = 50;
-    [SerializeField] private float _fieldRadius = 5f;
-    [SerializeField] private double _asteroidSizeVariation = 0.3;
-    [SerializeField] private double _minimumAsteroidSize = 0.2;
+    private int _minBelts = 0;
+    private int _maxBelts = 3;
+    private int _astroidsPerField = 50;
+    private float _fieldRadius = 5f;
+    private float _beltInnerOffset = 0.5f;
+    private float _beltWidth = 2f;
+    private double _asteroidSizeVariation = 0.3;
+    private double _minimumAsteroidSize = 0.2;
+
+    [Header("Mass Settings")]
+    private float _starMass = 1f;
+    private float _planetMass = 0.3f;
+
+    [Header("Scalers")]
+    private float _timeScale = 0.5f;
+    private float _gasGiantScale = 2.5f;
+    private float _planetScale = 1f;
+    private float _moonScale = 0.5f;
+    private float _planetOrbitLineWidth = 0.05f;
+    private float _moonOrbitLineWidth = 0.025f;
 
     private Transform _star;
 
@@ -64,34 +80,52 @@ public class SolarSystemSpawner : MonoBehaviour
 
         for (int i = 0; i < planetCount; i++)
         {
-            bool isGasGiant = (_rng.NextDouble() < 0.2 && i > 2); // ~20%, can't be close to star either
+            bool isGasGiant = (_rng.NextDouble() < _gasGiantChance && i > _minGasGiantIndex);
             GameObject prefab = isGasGiant ? _gasGiantPrefab : _planetPrefab;
-            // === NOTE Temp name fix === \\
             string name = (isGasGiant ? "Gas Giant" : "Planet") + (i + 1);
 
             float radius = currentOrbit;
-            float period = radius * 5f;     //NOTE  proportional period, very simple, probably expand later
+            float period = KeplerPeriod(radius, _starMass, _timeScale);
 
-            GameObject planet = SpawnOrbitingBody(name, prefab, _star, radius, period, isGasGiant ? 2.5f : 1f, 0.05f);
+            GameObject planet = SpawnOrbitingBody(
+                name,
+                prefab,
+                _star,
+                radius,
+                period,
+                isGasGiant ? _gasGiantScale : _planetScale,
+                _planetOrbitLineWidth
+            );
 
             // === MOONS === \\
-            int moonCount = isGasGiant ? _rng.Next(_minMoons + 3, _maxMoons + 4) : _rng.Next(_minMoons, _maxMoons + 1);
+            int moonCount = isGasGiant
+                ? _rng.Next(_minMoons + 3, _maxMoons + 4)
+                : _rng.Next(_minMoons, _maxMoons + 1);
+
             for (int m = 0; m < moonCount; m++)
             {
                 float moonRadius = (float)(_rng.NextDouble() * (_moonMaxDist - _moonMinDist) + _moonMinDist);
-                float moonPeriod = (float)(_rng.NextDouble() * (_moonMaxPeriod - _moonMinPeriod) + _moonMinPeriod);
-                SpawnOrbitingBody($"{name} Moon {m + 1}", _moonPrefab, planet.transform, moonRadius, moonPeriod, 0.5f, 0.025f);
+                float moonPeriod = KeplerPeriod(moonRadius, _planetMass, _timeScale);
+                SpawnOrbitingBody(
+                    $"{name} Moon {m + 1}",
+                    _moonPrefab,
+                    planet.transform,
+                    moonRadius,
+                    moonPeriod,
+                    _moonScale,
+                    _moonOrbitLineWidth
+                );
             }
 
-            currentOrbit += _planetSpacing + (float)_rng.NextDouble() * 5f;
+            currentOrbit += _planetSpacing + (float)_rng.NextDouble() * 5f; // Arbitrary int for "jitter" placement
         }
 
         // === ASTEROID BELTS === \\
         int beltCount = _rng.Next(_minBelts, _maxBelts + 1);
         for (int b = 0; b < beltCount; b++)
         {
-            float beltMinRadius = currentOrbit + 5f;
-            float beltMaxRadius = beltMinRadius + 20f;
+            float beltMinRadius = currentOrbit + _beltInnerOffset;
+            float beltMaxRadius = beltMinRadius + _beltWidth;
             float beltDist = (float)(_rng.NextDouble() * (beltMaxRadius - beltMinRadius) + beltMinRadius);
             SpawnAsteroidBelt("Asteroid Belt " + (b + 1), beltDist);
         }
@@ -141,10 +175,17 @@ public class SolarSystemSpawner : MonoBehaviour
             // Cartesian model, I think???
             Vector3 position = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * distance;
             position += _star.position;
-            position.z += (float)(_rng.NextDouble() * 2f - 1f);
+            position.z += (float)(_rng.NextDouble() * 2f - 1f); // 1f for "jitter" placement
 
             GameObject asteroid = Instantiate(_asteroidPrefab, position, Quaternion.identity, belt.transform);
             asteroid.transform.localScale = Vector3.one * (float)(_rng.NextDouble() * _asteroidSizeVariation + _minimumAsteroidSize);
         }
+    }
+
+    private float KeplerPeriod(float radius, float centralMass, float scale = 1f)
+    {
+        // T = 2π * sqrt(r^3 / (G*M))
+        // Collapse G --> timeScale --> avoid LARGE numbers
+        return scale *2f * Mathf.PI * Mathf.Sqrt((radius * radius * radius) / centralMass);
     }
 }
