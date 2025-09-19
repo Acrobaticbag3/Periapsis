@@ -5,7 +5,7 @@ using UnityEngine;
 public class SolarSystemSpawner : MonoBehaviour
 {
     [Header("Seed")]
-    [SerializeField] private int _seed = 0;
+    [SerializeField] private int _seed = 0; // Good test seed: 630079
     private System.Random _rng;
 
     [Header("Prefabs")]
@@ -36,12 +36,10 @@ public class SolarSystemSpawner : MonoBehaviour
     private float _moonMaxDist = 4f;
 
     [Header("Asteroid Belt Settings")]
-    private int _minBelts = 0;
-    private int _maxBelts = 3;
     private int _astroidsPerField = 50;
-    private float _fieldRadius = 5f;
+    private float _fieldRadius = 3f;
+    private float _beltRadius = 0.7f;
     private float _beltInnerOffset = 0.5f;
-    private float _beltWidth = 2f;
     private double _asteroidSizeVariation = 0.3;
     private double _minimumAsteroidSize = 0.2;
 
@@ -97,6 +95,11 @@ public class SolarSystemSpawner : MonoBehaviour
                 _planetOrbitLineWidth
             );
 
+            if (isGasGiant)
+            {
+                SpawnAsteroidBeltAroundPlanet(planet, "Ring of " + name, _beltRadius, _astroidsPerField);
+            }
+
             // === MOONS === \\
             int moonCount = isGasGiant
                 ? _rng.Next(_minMoons + 3, _maxMoons + 4)
@@ -121,14 +124,15 @@ public class SolarSystemSpawner : MonoBehaviour
         }
 
         // === ASTEROID BELTS === \\
-        int beltCount = _rng.Next(_minBelts, _maxBelts + 1);
-        for (int b = 0; b < beltCount; b++)
-        {
-            float beltMinRadius = currentOrbit + _beltInnerOffset;
-            float beltMaxRadius = beltMinRadius + _beltWidth;
-            float beltDist = (float)(_rng.NextDouble() * (beltMaxRadius - beltMinRadius) + beltMinRadius);
-            SpawnAsteroidBelt("Asteroid Belt " + (b + 1), beltDist);
-        }
+        float beltDist = currentOrbit + _beltInnerOffset;
+        SpawnAsteroidBelt("Main Asteroid Belt", beltDist);
+    }
+
+    private float KeplerPeriod(float radius, float centralMass, float scale = 1f)
+    {
+        // T = 2π * sqrt(r^3 / (G*M))
+        // Collapse G --> timeScale --> avoid LARGE numbers
+        return scale * 2f * Mathf.PI * Mathf.Sqrt((radius * radius * radius) / centralMass);
     }
 
     GameObject SpawnOrbitingBody(string name, GameObject prefab, Transform parentBody, float orbitRadius, float orbitPeriod, float scale, float lineWidth)
@@ -167,7 +171,7 @@ public class SolarSystemSpawner : MonoBehaviour
         GameObject belt = new GameObject(name);
         belt.transform.position = _star.position;
 
-        for (int i = 0; i < _astroidsPerField; i++)
+        for (int i = 0; i < _astroidsPerField + 450; i++)
         {
             float angle = (float)(_rng.NextDouble() * 2 * Mathf.PI);                    // 0 --> 360 degrees
             float distance = innerRadius + (float)(_rng.NextDouble() * _fieldRadius);   // Inner --> outer ring
@@ -182,10 +186,23 @@ public class SolarSystemSpawner : MonoBehaviour
         }
     }
 
-    private float KeplerPeriod(float radius, float centralMass, float scale = 1f)
+    void SpawnAsteroidBeltAroundPlanet(GameObject planet, string beltName, float radius, int asteroidCount)
     {
-        // T = 2π * sqrt(r^3 / (G*M))
-        // Collapse G --> timeScale --> avoid LARGE numbers
-        return scale *2f * Mathf.PI * Mathf.Sqrt((radius * radius * radius) / centralMass);
+        GameObject belt = new GameObject(beltName);
+        belt.transform.position = planet.transform.position;
+        belt.transform.parent = planet.transform;
+
+        for (int i = 0; i < asteroidCount; i++)
+        {
+            float angle = (float)(_rng.NextDouble() * 2 * Mathf.PI);                    // 0 --> 360 degrees
+            float distance = radius + (float)(_rng.NextDouble() * _beltRadius);         // Inner --> outer ring
+
+            Vector3 position = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * distance;
+            position += planet.transform.position;
+            position.z += (float)(_rng.NextDouble() * 2f - 1f); // 1f for "jitter" placement
+
+            GameObject asteroid = Instantiate(_asteroidPrefab, position, Quaternion.identity, belt.transform);
+            asteroid.transform.localScale = Vector3.one * (float)(_rng.NextDouble() * _asteroidSizeVariation + _minimumAsteroidSize);
+        }
     }
 }
