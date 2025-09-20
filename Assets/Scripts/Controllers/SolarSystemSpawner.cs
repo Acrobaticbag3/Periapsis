@@ -5,23 +5,25 @@ using UnityEngine;
 public class SolarSystemSpawner : MonoBehaviour
 {
     [Header("Seed")]
-    [SerializeField] private int _seed = 0; // Good test seed: 630079
+    [SerializeField] private int _seed = 0;
     private System.Random _rng;
 
     [Header("Prefabs")]
-    [SerializeField] private GameObject _starPrefab;
-    [SerializeField] private GameObject _planetPrefab;
-    [SerializeField] private GameObject _gasGiantPrefab;
+    [SerializeField] private List<GameObject> _starPrefabs;
+    [SerializeField] private List<PlanetPrefabEntry> _planetPrefabs;
     [SerializeField] private GameObject _asteroidPrefab;
-    [SerializeField] private GameObject _moonPrefab;
 
     [Header("Orbit Line Settings")]
     [SerializeField] private Material _orbitLineMaterial;
     [SerializeField] private int _orbitSegments = 100;
 
-    [Header("Gas Giant")]
+    [Header("Star Settings")]
+    private Transform _star;
+    private StarType _starType;
+    private float _starMass = 1f;
+
+    [Header("Gas Giant Settings")]
     private float _gasGiantChance = 0.2f;
-    private int _minGasGiantIndex = 3;
 
     [Header("Planet Settings")]
     private int _minPlanets = 3;
@@ -38,24 +40,46 @@ public class SolarSystemSpawner : MonoBehaviour
     [Header("Asteroid Belt Settings")]
     private int _astroidsPerField = 50;
     private float _fieldRadius = 3f;
-    private float _beltRadius = 0.7f;
+    private float _beltRadius = 1f;
     private float _beltInnerOffset = 0.5f;
     private double _asteroidSizeVariation = 0.3;
-    private double _minimumAsteroidSize = 0.2;
-
-    [Header("Mass Settings")]
-    private float _starMass = 1f;
-    private float _planetMass = 0.3f;
+    private double _minimumAsteroidSize = 0.5;
 
     [Header("Scalers")]
     private float _timeScale = 0.5f;
-    private float _gasGiantScale = 2.5f;
+    private float _gasGiantScale = 1.5f;
     private float _planetScale = 1f;
-    private float _moonScale = 0.5f;
+    private float _moonScale = 0.1f;
     private float _planetOrbitLineWidth = 0.05f;
     private float _moonOrbitLineWidth = 0.025f;
 
-    private Transform _star;
+    [Header("Star/Planet Types")]
+    private Dictionary<PlanetType, GameObject> _planetPrefabMap;
+    private Dictionary<StarType, PlanetType[]> _starPlanetTable = new Dictionary<StarType, PlanetType[]>
+    {
+        { StarType.O, new[] { PlanetType.Volcanic, PlanetType.Toxic, PlanetType.GasGiant } },
+        { StarType.B, new[] { PlanetType.Volcanic, PlanetType.Cryogenic, PlanetType.GasGiant } },
+        { StarType.A, new[] { PlanetType.Arctic, PlanetType.Tundra, PlanetType.Desert, PlanetType.GasGiant } },
+        { StarType.F, new[] { PlanetType.Continental, PlanetType.Savanna, PlanetType.Ocean, PlanetType.GasGiant } },
+        { StarType.G, new[] { PlanetType.Continental, PlanetType.Savanna, PlanetType.Ocean, PlanetType. Desert, PlanetType.GasGiant } },
+        { StarType.K, new[] { PlanetType.Savanna, PlanetType.Continental, PlanetType.Ocean, PlanetType.GasGiant } },
+        { StarType.M, new[] { PlanetType.Cryogenic, PlanetType.Tundra, PlanetType.Desert, PlanetType.GasGiant } }
+    };
+
+    [Header("Planet Type Ranges")]
+    private Dictionary<PlanetType, (int minIndex, int maxIndex)> _planetZones = new Dictionary<PlanetType, (int, int)>
+    {
+        { PlanetType.Volcanic, (0, 2) },
+        { PlanetType.Toxic, (0, 3) },
+        { PlanetType.Desert, (1, 4) },
+        { PlanetType.Continental, (2, 5) },
+        { PlanetType.Savanna, (2, 5) },
+        { PlanetType.Ocean, (3, 5) },
+        { PlanetType.Arctic, (3, 6) },
+        { PlanetType.Tundra, (3, 6) },
+        { PlanetType.Cryogenic, (4, 7) },
+        { PlanetType.GasGiant, (4, 7) }
+    };
 
     void Start()
     {
@@ -64,13 +88,24 @@ public class SolarSystemSpawner : MonoBehaviour
 
         _rng = new System.Random(_seed);
         Debug.Log("Generating System with seed: " + _seed);
+
+        _planetPrefabMap = new Dictionary<PlanetType, GameObject>();
+        foreach (var entry in _planetPrefabs)
+        {
+            if (!_planetPrefabMap.ContainsKey(entry.Type))
+                _planetPrefabMap.Add(entry.Type, entry.Prefab);
+        }
+
         SpawnSystem();
     }
 
     void SpawnSystem()
     {
         // === STAR === \\
-        _star = SpawnOrbitingBody("Star", _starPrefab, null, 0, 0, 3, 0f).transform;
+        _starType = (StarType)_rng.Next(System.Enum.GetValues(typeof(StarType)).Length);
+        GameObject starPrefab = _starPrefabs[(int)_starType];
+        _star = SpawnOrbitingBody("Star", starPrefab, null, 0, 0, 3, 0f).transform;
+        _starMass = _star.GetComponent<StarModel>()?.Mass ?? 1f;
 
         // === PLANETS === \\
         int planetCount = _rng.Next(_minPlanets, _maxPlanets + 1);
@@ -78,9 +113,26 @@ public class SolarSystemSpawner : MonoBehaviour
 
         for (int i = 0; i < planetCount; i++)
         {
-            bool isGasGiant = (_rng.NextDouble() < _gasGiantChance && i > _minGasGiantIndex);
-            GameObject prefab = isGasGiant ? _gasGiantPrefab : _planetPrefab;
-            string name = (isGasGiant ? "Gas Giant" : "Planet") + (i + 1);
+            bool isGasGiant = false;
+            var (minGasIndex, maxGasIndex) = _planetZones[PlanetType.GasGiant];
+            if (minGasIndex <= i && i <= maxGasIndex)
+                isGasGiant = (_rng.NextDouble() < _gasGiantChance);
+
+            PlanetType planetType;
+            GameObject prefab;
+
+            if (isGasGiant)
+            {
+                planetType = PlanetType.GasGiant;
+                prefab = _planetPrefabMap[PlanetType.GasGiant];
+            }
+            else
+            {
+                planetType = PickPlanetTypeForIndex(i, _starType);
+                prefab = _planetPrefabMap[planetType];
+            }
+
+            string name = planetType.ToString() + " " + (i + 1);
 
             float radius = currentOrbit;
             float period = KeplerPeriod(radius, _starMass, _timeScale);
@@ -108,10 +160,11 @@ public class SolarSystemSpawner : MonoBehaviour
             for (int m = 0; m < moonCount; m++)
             {
                 float moonRadius = (float)(_rng.NextDouble() * (_moonMaxDist - _moonMinDist) + _moonMinDist);
-                float moonPeriod = KeplerPeriod(moonRadius, _planetMass, _timeScale);
+                float moonPeriod = KeplerPeriod(moonRadius, _starMass, _timeScale); // Change to use planets mass instead
+                GameObject moonPrefab = _planetPrefabMap[PlanetType.Moon];
                 SpawnOrbitingBody(
                     $"{name} Moon {m + 1}",
-                    _moonPrefab,
+                    moonPrefab,
                     planet.transform,
                     moonRadius,
                     moonPeriod,
@@ -126,6 +179,26 @@ public class SolarSystemSpawner : MonoBehaviour
         // === ASTEROID BELTS === \\
         float beltDist = currentOrbit + _beltInnerOffset;
         SpawnAsteroidBelt("Main Asteroid Belt", beltDist);
+    }
+
+    private PlanetType PickPlanetTypeForIndex(int index, StarType starType)
+    {
+        PlanetType[] candidates = _starPlanetTable[starType];
+        List<PlanetType> valid = new List<PlanetType>();
+
+        foreach (var type in candidates)
+        {
+            if (_planetZones.ContainsKey(type))
+            {
+                var (minIndex, maxIndex) = _planetZones[type];
+                if (minIndex <= index && index <= maxIndex)
+                    valid.Add(type);
+            }
+        }
+        if (valid.Count == 0)
+            return PlanetType.Volcanic;
+
+        return valid[_rng.Next(valid.Count)];
     }
 
     private float KeplerPeriod(float radius, float centralMass, float scale = 1f)

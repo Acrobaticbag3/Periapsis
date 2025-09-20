@@ -16,6 +16,6 @@ public enum PlanetType
     Hazardous,      // Velethari reduced upkeep | Humans/Avali/Zyrix increased upkeep
     GasGiant,       // Neutral - everyone pays normal upkeep
     Moon,           // Zyrix reduced upkeep
-    Derelict        // Zyrix reduced upkeep
+    // Derelict        // Zyrix reduced upkeep
 }
 
