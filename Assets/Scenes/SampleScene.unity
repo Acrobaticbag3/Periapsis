@@ -237,7 +237,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f3fee21f5dfe4241bd1ab14b921ac8b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _seed: 0
+  _seed: 630079
   _starPrefab: {fileID: 1384595407}
   _planetPrefab: {fileID: 1670230283}
   _gasGiantPrefab: {fileID: 1297849278}
@@ -245,22 +245,6 @@ MonoBehaviour:
   _moonPrefab: {fileID: 589523847}
   _orbitLineMaterial: {fileID: 2100000, guid: 401e1eff92f81f343bfc2630729e7b60, type: 2}
   _orbitSegments: 4
-  _minPlanets: 3
-  _maxPlanets: 7
-  _planetMinDist: 10
-  _planetSpacing: 8
-  _minMoons: 0
-  _maxMoons: 3
-  _moonMinDist: 1.5
-  _moonMaxDist: 4
-  _moonMinPeriod: 2
-  _moonMaxPeriod: 6
-  _minBelts: 0
-  _maxBelts: 3
-  _astroidsPerField: 50
-  _fieldRadius: 5
-  _asteroidSizeVariation: 0.3
-  _minimumAsteroidSize: 0.2
 --- !u!4 &192371086
 Transform:
   m_ObjectHideFlags: 0
@@ -359,7 +343,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8480031341752358360, guid: 8c4d34fe4ce655c4d87979f95b2d4f13, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -38
+      value: -150
       objectReference: {fileID: 0}
     - target: {fileID: 8480031341752358360, guid: 8c4d34fe4ce655c4d87979f95b2d4f13, type: 3}
       propertyPath: m_LocalPosition.z
@@ -511,7 +495,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 93993426770933020, guid: 6e069eef96837fc45984476a8ce3faa7, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -38
+      value: -150
       objectReference: {fileID: 0}
     - target: {fileID: 93993426770933020, guid: 6e069eef96837fc45984476a8ce3faa7, type: 3}
       propertyPath: m_LocalPosition.z
@@ -588,7 +572,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5599880098517312216, guid: d29cdc419a038db45a1b906e39d64cc9, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -38
+      value: -150
       objectReference: {fileID: 0}
     - target: {fileID: 5599880098517312216, guid: d29cdc419a038db45a1b906e39d64cc9, type: 3}
       propertyPath: m_LocalPosition.z
@@ -878,7 +862,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4219988378548309355, guid: 14eab2ff6e1d46c45a0fed74866f5e8d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -38
+      value: -150
       objectReference: {fileID: 0}
     - target: {fileID: 4219988378548309355, guid: 14eab2ff6e1d46c45a0fed74866f5e8d, type: 3}
       propertyPath: m_LocalPosition.z
@@ -939,7 +923,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 875513627908753498, guid: cccf42e05e2422f47ade0d61a683f95c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -37.2
+      value: -149.2
       objectReference: {fileID: 0}
     - target: {fileID: 875513627908753498, guid: cccf42e05e2422f47ade0d61a683f95c, type: 3}
       propertyPath: m_LocalPosition.z

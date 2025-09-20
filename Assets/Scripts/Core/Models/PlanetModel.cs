@@ -4,12 +4,19 @@ using UnityEngine;
 
 public class PlanetModel : MonoBehaviour
 {
-    [SerializeField] private float _size = 1f;
-    [SerializeField] private Color _color = Color.white;
-
+    [SerializeField] private PlanetType _planetType;
+    [SerializeField] private List<UpkeepModifier> _upkeepModifiers;
+    private float _size = 1f;
+    private Color _color = Color.white;
     private string _planetName;
     private OrbitModel _orbit;
-    
+
+    public PlanetType PlanetType
+    {
+        get => _planetType;
+        set => _planetType = value;
+    }
+
     public string PlanetName
     {
         get => _planetName;
@@ -32,5 +39,15 @@ public class PlanetModel : MonoBehaviour
     {
         get => _orbit;
         set => _orbit = value;
+    }
+
+    public float GetUpkeepForSpecies(Species species)
+    {
+        foreach (var modifier in _upkeepModifiers)
+        {
+            if (modifier.Species == species)
+                return modifier.UpkeepMultiplier;
+        }
+        return 1f;
     }
 }
